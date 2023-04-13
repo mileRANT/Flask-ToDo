@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -14,11 +14,50 @@ class Todo(db.Model):
     title = db.Column(db.String(100))
     complete = db.Column(db.Boolean)
 
+#creating the base application
+# with app.app_context():
+# #     db.create_all()
+#     todo1 = Todo(title="This",complete=False)
+#     todo2 = Todo(title="or", complete=False)
+#     todo3 = Todo(title="That", complete=False)
+#     db.session.add(todo1)
+#     db.session.add(todo2)
+#     db.session.add(todo3)
+#     db.session.commit()
+@app.route("/")
+def home():
+    todo_list = Todo.query.all()
+    return render_template("base.html", todo_list=todo_list)
 
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
+@app.route("/add", methods=["POST"])
+def add():
+    title = request.form.get("title")
+    new_todo = Todo(title=title, complete=False)
+    db.session.add(new_todo)
+    db.session.commit()
+    return redirect(url_for("home"))
+
+@app.route("/update/<int:todo_id>")
+def update(todo_id):
+    todo = Todo.query.filter_by(id=todo_id).first()
+    todo.complete = not todo.complete
+    db.session.commit()
+    return redirect(url_for("home"))
+
+@app.route("/delete/<int:todo_id>")
+def delete(todo_id):
+    todo = Todo.query.filter_by(id=todo_id).first()
+    db.session.delete(todo)
+    db.session.commit()
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
     # db.create_all()
+    # todo1 = Todo(title="This",complete=False)
+    # todo2 = Todo(title="or", complete=False)
+    # todo3 = Todo(title="That", complete=False)
+    # db.session.add(todo1)
+    # db.session.add(todo2)
+    # db.session.add(todo3)
+    # db.session.commit()
     app.run(debug=True)
